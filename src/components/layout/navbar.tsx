@@ -16,7 +16,7 @@ const Navbar = () => {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/public/logo.png"
+            src="/logo.png"
             alt="PizzaHub Logo"
             width={175}
             height={65}
