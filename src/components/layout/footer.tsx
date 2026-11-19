@@ -1,15 +1,11 @@
 import Image from "next/image";
-import {
-  Mail,
-  MapPin,
-  Phone,
-} from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
+import CurrentYear from "./current-year";
 
 const Footer = () => {
   return (
     <footer className="bg-[#29211D] text-white">
       <div className="mx-auto grid max-w-7xl gap-45 px-5 py-12 sm:px-8 md:grid-cols-2 lg:grid-cols-3">
-
         {/* Brand */}
         <div>
           <Image
@@ -21,8 +17,8 @@ const Footer = () => {
           />
 
           <p className="mt-4 max-w-xs text-sm leading-7 text-gray-300">
-            Enjoy delicious and freshly baked pizzas from your
-            favorite local restaurants. Good food, happy moments!
+            Enjoy delicious and freshly baked pizzas from your favorite local
+            restaurants. Good food, happy moments!
           </p>
         </div>
         {/* Support */}
@@ -30,15 +26,9 @@ const Footer = () => {
           <h3 className="mb-5 text-lg font-bold">Customer Support</h3>
 
           <div className="flex flex-col gap-3 text-sm text-gray-300">
-            <p className="hover:text-orange-400">
-              Contact Us
-            </p>
-            <p className="hover:text-orange-400">
-              About Us
-            </p>
-            <p className="hover:text-orange-400">
-              FAQ
-            </p>
+            <p className="hover:text-orange-400">Contact Us</p>
+            <p className="hover:text-orange-400">About Us</p>
+            <p className="hover:text-orange-400">FAQ</p>
           </div>
         </div>
 
@@ -63,12 +53,11 @@ const Footer = () => {
             </p>
           </div>
         </div>
-
       </div>
 
       {/* Copyright */}
       <div className="border-t border-white/10 px-5 py-5 text-center text-sm text-gray-400">
-        © {new Date().getFullYear()} PizzaHub. All rights reserved.
+        © <CurrentYear /> PizzaHub. All rights reserved.
       </div>
     </footer>
   );
