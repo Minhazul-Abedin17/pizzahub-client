@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "./auth";
 
-
 type UserRole = "customer" | "vendor" | "admin";
 
 export const requireRole = async (allowedRoles: UserRole[]) => {
@@ -11,7 +10,6 @@ export const requireRole = async (allowedRoles: UserRole[]) => {
     headers: await headers(),
   });
 
-  // User is not logged in
   if (!session) {
     redirect("/sign-in");
   }
@@ -20,7 +18,6 @@ export const requireRole = async (allowedRoles: UserRole[]) => {
     role?: UserRole;
   };
 
-  // Check user role
   if (!user.role || !allowedRoles.includes(user.role)) {
     redirect("/");
   }
