@@ -1,108 +1,246 @@
-
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Menu, X, UserCircle, LayoutDashboard, LogOut } from "lucide-react";
 
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+import { toast } from "react-toastify";
+import { authClient, useSession } from "@/app/lib/auth-client";
+
+export default function Navbar() {
+  const router = useRouter();
+
+  const { data: session, isPending } = useSession();
+
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  const user = session?.user as
+    | { name?: string; email?: string; role?: string }
+    | undefined;
+
+  const role = user?.role || "customer";
+
+  const dashboardLink =
+    role === "admin"
+      ? "/dashboard/admin"
+      : role === "vendor"
+        ? "/dashboard/vendor"
+        : "/dashboard/customer";
+
+  const handleSignOut = async () => {
+    try {
+      setLoggingOut(true);
+
+      const { error } = await authClient.signOut();
+
+      if (error) {
+        toast.error(error.message || "Sign out failed");
+        return;
+      }
+
+      setAccountOpen(false);
+      setMobileOpen(false);
+
+      toast.success("Successfully signed out!");
+
+      router.replace("/");
+      router.refresh();
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
+  const closeMenu = () => {
+    setMobileOpen(false);
+  };
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-orange-100 bg-white">
+    <nav className="sticky top-0 z-50 border-b border-orange-100 bg-white shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" onClick={closeMenu} className="flex items-center gap-2">
           <Image
             src="/logo.png"
-            alt="PizzaHub Logo"
-            width={175}
-            height={65}
-            priority
+            alt="PizzaHub"
+            width={170}
+            height={60}
             className="h-12 w-auto object-contain"
           />
         </Link>
 
-        {/* Desktop Menu */}
-        <div className="hidden items-center gap-8 md:flex">
-          <Link href="/" className="font-medium text-gray-700 hover:text-red-600">
+        {/* Desktop Navigation */}
+        <div className="hidden items-center gap-7 md:flex">
+          <Link
+            href="/"
+            className="text-sm font-medium text-gray-700 hover:text-red-600"
+          >
             Home
           </Link>
 
-          <Link href="/menu" className="font-medium text-gray-700 hover:text-red-600">
+          <Link
+            href="/menu"
+            className="text-sm font-medium text-gray-700 hover:text-red-600"
+          >
             Browse Menu
           </Link>
         </div>
 
-        {/* Desktop Buttons */}
+        {/* Desktop Auth Section */}
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/sign-in"
-            className="rounded-lg px-5 py-2 font-semibold text-gray-700 hover:bg-orange-50"
-          >
-            Sign In
-          </Link>
+          {isPending ? (
+            <div className="h-9 w-24 animate-pulse rounded-lg bg-gray-100" />
+          ) : session ? (
+            <div className="relative">
+              <button
+                onClick={() => setAccountOpen(!accountOpen)}
+                className="flex items-center gap-2 rounded-lg border border-orange-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-orange-50"
+              >
+                <UserCircle size={20} className="text-red-600" />
+                <span>{user?.name || "My Account"}</span>
+              </button>
 
-          <Link
-            href="/sign-up"
-            className="rounded-lg bg-red-600 px-5 py-2 font-semibold text-white transition hover:bg-red-700"
-          >
-            Sign Up
-          </Link>
+              {accountOpen && (
+                <div className="absolute right-0 mt-2 w-52 rounded-xl border bg-white p-2 shadow-lg">
+                  <div className="border-b px-3 py-2">
+                    <p className="truncate text-sm font-semibold text-gray-800">
+                      {user?.name}
+                    </p>
+                    <p className="truncate text-xs text-gray-500">
+                      {user?.email}
+                    </p>
+                    <p className="mt-1 text-xs capitalize text-red-600">
+                      {role}
+                    </p>
+                  </div>
+
+                  <Link
+                    href={dashboardLink}
+                    onClick={() => setAccountOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-orange-50"
+                  >
+                    <LayoutDashboard size={17} />
+                    Dashboard
+                  </Link>
+
+                  <button
+                    onClick={handleSignOut}
+                    disabled={loggingOut}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    <LogOut size={17} />
+                    {loggingOut ? "Signing Out..." : "Sign Out"}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <Link
+                href="/sign-in"
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
+              >
+                Sign In
+              </Link>
+
+              <Link
+                href="/sign-up"
+                className="rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => setMobileOpen(!mobileOpen)}
           className="rounded-lg p-2 text-gray-700 hover:bg-orange-50 md:hidden"
           aria-label="Toggle menu"
         >
-          {isOpen ? <X size={25} /> : <Menu size={25} />}
+          {mobileOpen ? <X size={25} /> : <Menu size={25} />}
         </button>
       </div>
 
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="border-t border-orange-100 bg-white px-5 py-5 md:hidden">
-          <div className="flex flex-col gap-4">
+      {/* Mobile Navigation */}
+      {mobileOpen && (
+        <div className="border-t border-orange-100 bg-white px-4 py-4 md:hidden">
+          <div className="flex flex-col gap-3">
             <Link
               href="/"
-              onClick={() => setIsOpen(false)}
-              className="font-medium text-gray-700"
+              onClick={closeMenu}
+              className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-orange-50"
             >
               Home
             </Link>
 
             <Link
               href="/menu"
-              onClick={() => setIsOpen(false)}
-              className="font-medium text-gray-700"
+              onClick={closeMenu}
+              className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-orange-50"
             >
               Browse Menu
             </Link>
 
-            <Link
-              href="/sign-in"
-              onClick={() => setIsOpen(false)}
-              className="font-medium text-gray-700"
-            >
-              Sign In
-            </Link>
+            {!isPending &&
+              (session ? (
+                <>
+                  <div className="rounded-lg bg-orange-50 p-3">
+                    <p className="font-semibold text-gray-800">
+                      {user?.name || "My Account"}
+                    </p>
+                    <p className="text-xs text-gray-500">{user?.email}</p>
+                    <p className="mt-1 text-xs capitalize text-red-600">
+                      {role}
+                    </p>
+                  </div>
 
-            <Link
-              href="/sign-up"
-              onClick={() => setIsOpen(false)}
-              className="rounded-lg bg-red-600 px-4 py-2 text-center font-semibold text-white"
-            >
-              Sign Up
-            </Link>
+                  <Link
+                    href={dashboardLink}
+                    onClick={closeMenu}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-orange-50"
+                  >
+                    <LayoutDashboard size={18} />
+                    Dashboard
+                  </Link>
+
+                  <button
+                    onClick={handleSignOut}
+                    disabled={loggingOut}
+                    className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-left text-sm font-semibold text-red-600 disabled:opacity-50"
+                  >
+                    <LogOut size={18} />
+                    {loggingOut ? "Signing Out..." : "Sign Out"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/sign-in"
+                    onClick={closeMenu}
+                    className="rounded-lg border border-red-600 px-4 py-2 text-center text-sm font-semibold text-red-600"
+                  >
+                    Sign In
+                  </Link>
+
+                  <Link
+                    href="/sign-up"
+                    onClick={closeMenu}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-center text-sm font-semibold text-white"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              ))}
           </div>
         </div>
       )}
     </nav>
   );
-};
-
-export default Navbar;
+}

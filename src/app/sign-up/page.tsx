@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -40,6 +39,7 @@ export default function SignUpPage() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const image = formData.get("image") as string;
+    const role = formData.get("role") as "customer" | "vendor";
 
     try {
       const { data, error } = await authClient.signUp.email({
@@ -47,6 +47,7 @@ export default function SignUpPage() {
         email,
         password,
         image: image || undefined,
+        role,
         callbackURL: "/",
       });
 
@@ -69,7 +70,6 @@ export default function SignUpPage() {
   return (
     <main className="flex min-h-[75vh] items-center justify-center px-4 py-12">
       <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-lg sm:p-8">
-
         {/* Header */}
         <div className="mb-7 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-100">
@@ -87,7 +87,6 @@ export default function SignUpPage() {
 
         {/* Email Signup Form */}
         <form className="space-y-4" onSubmit={handleEmailSignUp}>
-
           {/* Full Name */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
@@ -118,9 +117,7 @@ export default function SignUpPage() {
 
           {/* Password */}
           <div>
-            <label className="mb-2 block text-sm font-semibold">
-              Password
-            </label>
+            <label className="mb-2 block text-sm font-semibold">Password</label>
             <input
               type="password"
               name="password"
@@ -201,7 +198,6 @@ export default function SignUpPage() {
             Sign In
           </Link>
         </p>
-
       </div>
     </main>
   );
