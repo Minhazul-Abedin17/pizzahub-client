@@ -1,8 +1,6 @@
+import { API_URL } from "./api";
 import { authClient } from "./auth-client";
 
-
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const authFetch = async (
   path: string,
