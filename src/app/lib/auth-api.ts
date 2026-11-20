@@ -12,12 +12,16 @@ export const authFetch = async (
     throw new Error("Please sign in first");
   }
 
+  const headers = new Headers(options.headers);
+
+  headers.set("Authorization", `Bearer ${data.token}`);
+
+  if (options.body && !(options.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
+
   return fetch(`${API_URL}${endpoint}`, {
     ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${data.token}`,
-      "Content-Type": "application/json",
-    },
+    headers,
   });
 };
