@@ -1,20 +1,18 @@
 
-import MenuPageContent from "@/components/menu/menu-page-content";
-import { Suspense } from "react";
+export const instant = false;
 
+import MenuList from "@/components/menu/menu-list";
 
-const MenuPage = () => {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-[#FFF9F0] py-20 text-center text-gray-500">
-          Loading menu...
-        </div>
-      }
-    >
-      <MenuPageContent />
-    </Suspense>
-  );
+type MenuPageProps = {
+  searchParams: Promise<{
+    category?: string;
+  }>;
+};
+
+const MenuPage = async ({ searchParams }: MenuPageProps) => {
+  const params = await searchParams;
+
+  return <MenuList initialCategory={params.category || "All"} />;
 };
 
 export default MenuPage;

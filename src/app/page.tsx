@@ -1,5 +1,5 @@
 
-import { Suspense } from "react";
+export const instant = false;
 
 import Banner from "@/components/home/banner";
 import FeaturedPizzas from "@/components/home/featured-pizzas";
@@ -11,17 +11,7 @@ export default function Home() {
   return (
     <main>
       <Banner />
-
-      <Suspense
-        fallback={
-          <div className="bg-[#FFF9F0] px-5 py-16 text-center text-gray-500">
-            Loading featured pizzas...
-          </div>
-        }
-      >
-        <FeaturedPizzas />
-      </Suspense>
-
+      <FeaturedPizzas />
       <Categories />
       <WhyChooseUs />
       <OrderPromo />
