@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -8,20 +7,22 @@ import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+type UserRole = "customer" | "vendor" | "admin";
+
 export default function SignInPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Email Sign In
   const handleEmailSignIn = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
 
-    const email = formData.get("email") as string;
+    const email = (formData.get("email") as string).trim();
     const password = formData.get("password") as string;
+    const selectedRole = formData.get("role") as UserRole;
     const rememberMe = formData.get("rememberMe") === "on";
 
     try {
@@ -38,11 +39,44 @@ export default function SignInPage() {
         return;
       }
 
-      if (data) {
-        toast.success("Successfully signed in!");
-        router.push("/");
-        router.refresh();
+      if (!data?.user) {
+        toast.error("Unable to verify your account.");
+        return;
       }
+
+      const loggedInUser = data.user as typeof data.user & {
+        role?: UserRole;
+      };
+
+      const actualRole = loggedInUser.role;
+
+      if (!actualRole) {
+        await authClient.signOut();
+
+        toast.error("Account role could not be verified. Please try again.");
+        return;
+      }
+
+      if (actualRole !== selectedRole) {
+        await authClient.signOut();
+
+        toast.error(
+          `This account is registered as ${actualRole}. Please select the correct role.`,
+        );
+        return;
+      }
+
+      toast.success("Successfully signed in!");
+
+      if (actualRole === "admin") {
+        router.replace("/dashboard/admin");
+      } else if (actualRole === "vendor") {
+        router.replace("/dashboard/vendor");
+      } else {
+        router.replace("/dashboard/customer");
+      }
+
+      router.refresh();
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong. Please try again.");
@@ -51,7 +85,6 @@ export default function SignInPage() {
     }
   };
 
-  // Google Sign In
   const handleGoogleSignIn = async () => {
     try {
       setGoogleLoading(true);
@@ -67,7 +100,7 @@ export default function SignInPage() {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Something went wrong with Google sign in.");
+      toast.error("Google sign in failed. Please try again.");
       setGoogleLoading(false);
     }
   };
@@ -75,26 +108,36 @@ export default function SignInPage() {
   return (
     <main className="flex min-h-[75vh] items-center justify-center px-4 py-12">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg sm:p-8">
-
-        {/* Header */}
         <div className="mb-7 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-100">
             <Pizza size={30} className="text-red-600" />
           </div>
 
-          <h1 className="text-3xl font-bold text-[#29211D]">
-            Welcome Back!
-          </h1>
+          <h1 className="text-3xl font-bold text-[#29211D]">Welcome Back!</h1>
 
           <p className="mt-2 text-sm text-gray-500">
             Sign in to continue enjoying PizzaHub.
           </p>
         </div>
 
-        {/* Email Sign In */}
         <form className="space-y-5" onSubmit={handleEmailSignIn}>
+          <div>
+            <label className="mb-2 block text-sm font-semibold">
+              Account Type
+            </label>
 
-          {/* Email */}
+            <select
+              name="role"
+              defaultValue="customer"
+              required
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-red-500"
+            >
+              <option value="customer">Customer</option>
+              <option value="vendor">Vendor (Restaurant Owner)</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Email Address
@@ -109,11 +152,8 @@ export default function SignInPage() {
             />
           </div>
 
-          {/* Password */}
           <div>
-            <label className="mb-2 block text-sm font-semibold">
-              Password
-            </label>
+            <label className="mb-2 block text-sm font-semibold">Password</label>
 
             <input
               type="password"
@@ -124,7 +164,6 @@ export default function SignInPage() {
             />
           </div>
 
-          {/* Remember Me & Forgot Password */}
           <div className="flex items-center justify-between text-sm">
             <label className="flex items-center gap-2 text-gray-600">
               <input
@@ -143,7 +182,6 @@ export default function SignInPage() {
             </Link>
           </div>
 
-          {/* Sign In Button */}
           <button
             type="submit"
             disabled={loading || googleLoading}
@@ -153,14 +191,12 @@ export default function SignInPage() {
           </button>
         </form>
 
-        {/* Divider */}
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-gray-200" />
           <span className="text-sm text-gray-400">OR</span>
           <div className="h-px flex-1 bg-gray-200" />
         </div>
 
-        {/* Google Sign In */}
         <button
           type="button"
           onClick={handleGoogleSignIn}
@@ -168,11 +204,9 @@ export default function SignInPage() {
           className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 py-3 font-medium transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span className="text-xl font-bold text-blue-600">G</span>
-
           {googleLoading ? "Connecting..." : "Continue with Google"}
         </button>
 
-        {/* Sign Up Link */}
         <p className="mt-6 text-center text-sm text-gray-600">
           Don&apos;t have an account?{" "}
           <Link
@@ -182,7 +216,6 @@ export default function SignInPage() {
             Sign Up
           </Link>
         </p>
-
       </div>
     </main>
   );

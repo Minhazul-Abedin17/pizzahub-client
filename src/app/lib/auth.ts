@@ -1,4 +1,3 @@
-
 import { betterAuth } from "better-auth";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
@@ -31,14 +30,13 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       role: {
-        type: ["customer", "vendor"],
+        type: "string",
         required: false,
         defaultValue: "customer",
         input: true,
       },
     },
   },
-
   // JWT Plugin
   plugins: [
     jwt({

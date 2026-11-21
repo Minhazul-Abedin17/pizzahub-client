@@ -23,6 +23,33 @@ type UserWithRole = {
   role?: string;
 };
 
+type ProfileAvatarProps = {
+  user?: UserWithRole;
+  size?: number;
+};
+
+function ProfileAvatar({ user, size = 36 }: ProfileAvatarProps) {
+  return (
+    <div
+      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-orange-200 bg-orange-50"
+      style={{ width: size, height: size }}
+    >
+      {user?.image ? (
+        <Image
+          src={user.image}
+          alt={user.name || "Profile"}
+          width={size}
+          height={size}
+          unoptimized
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <UserCircle size={size * 0.65} className="text-red-600" />
+      )}
+    </div>
+  );
+}
+
 export default function Navbar() {
   const router = useRouter();
   const { data: session, isPending } = useSession();
@@ -32,9 +59,7 @@ export default function Navbar() {
   const [accountOpen, setAccountOpen] = useState(false);
 
   const user = session?.user as UserWithRole | undefined;
-
   const role = user?.role || "customer";
-  const profileImage = user?.image;
 
   const dashboardLink =
     role === "admin"
@@ -43,6 +68,11 @@ export default function Navbar() {
         ? "/dashboard/vendor"
         : "/dashboard/customer";
 
+  const closeMenu = () => {
+    setMobileOpen(false);
+    setAccountOpen(false);
+  };
+
   const handleSignOut = async () => {
     try {
       setLoggingOut(true);
@@ -50,49 +80,21 @@ export default function Navbar() {
       const { error } = await authClient.signOut();
 
       if (error) {
-        toast.error(error.message || "Sign out failed");
+        toast.error(error.message || "Sign out failed.");
         return;
       }
 
-      setAccountOpen(false);
-      setMobileOpen(false);
-
+      closeMenu();
       toast.success("Successfully signed out!");
 
       router.replace("/");
       router.refresh();
-    } catch {
+    } catch (error) {
+      console.error(error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setLoggingOut(false);
     }
-  };
-
-  const closeMenu = () => {
-    setMobileOpen(false);
-    setAccountOpen(false);
-  };
-
-  const ProfileAvatar = ({ size = 36 }: { size?: number }) => {
-    return (
-      <div
-        className="flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-orange-200 bg-orange-50"
-        style={{ width: size, height: size }}
-      >
-        {profileImage ? (
-          <Image
-            src={profileImage}
-            alt={user?.name || "Profile"}
-            width={size}
-            height={size}
-            unoptimized
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <UserCircle size={size * 0.65} className="text-red-600" />
-        )}
-      </div>
-    );
   };
 
   return (
@@ -133,25 +135,29 @@ export default function Navbar() {
           ) : session ? (
             <div className="relative">
               <button
+                type="button"
                 onClick={() => setAccountOpen(!accountOpen)}
+                aria-expanded={accountOpen}
                 className="flex items-center gap-2 rounded-lg border border-orange-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-orange-50"
               >
-                <ProfileAvatar size={32} />
+                <ProfileAvatar user={user} size={32} />
                 <span>{user?.name || "My Account"}</span>
               </button>
 
               {accountOpen && (
                 <div className="absolute right-0 mt-2 w-60 rounded-xl border bg-white p-2 shadow-lg">
                   <div className="flex items-center gap-3 border-b px-3 py-3">
-                    <ProfileAvatar size={42} />
+                    <ProfileAvatar user={user} size={42} />
 
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-gray-800">
                         {user?.name || "My Account"}
                       </p>
+
                       <p className="truncate text-xs text-gray-500">
                         {user?.email}
                       </p>
+
                       <p className="mt-1 text-xs capitalize text-red-600">
                         {role}
                       </p>
@@ -168,6 +174,7 @@ export default function Navbar() {
                   </Link>
 
                   <button
+                    type="button"
                     onClick={handleSignOut}
                     disabled={loggingOut}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
@@ -199,9 +206,11 @@ export default function Navbar() {
 
         {/* Mobile Menu Button */}
         <button
+          type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
           className="rounded-lg p-2 text-gray-700 hover:bg-orange-50 md:hidden"
           aria-label="Toggle menu"
+          aria-expanded={mobileOpen}
         >
           {mobileOpen ? <X size={25} /> : <Menu size={25} />}
         </button>
@@ -231,15 +240,17 @@ export default function Navbar() {
               (session ? (
                 <>
                   <div className="flex items-center gap-3 rounded-lg bg-orange-50 p-3">
-                    <ProfileAvatar size={48} />
+                    <ProfileAvatar user={user} size={48} />
 
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-gray-800">
                         {user?.name || "My Account"}
                       </p>
+
                       <p className="truncate text-xs text-gray-500">
                         {user?.email}
                       </p>
+
                       <p className="mt-1 text-xs capitalize text-red-600">
                         {role}
                       </p>
@@ -256,6 +267,7 @@ export default function Navbar() {
                   </Link>
 
                   <button
+                    type="button"
                     onClick={handleSignOut}
                     disabled={loggingOut}
                     className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-left text-sm font-semibold text-red-600 disabled:opacity-50"
