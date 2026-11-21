@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, FormEvent } from "react";
@@ -22,7 +21,9 @@ export default function AddPizzaPage() {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     setFormData({
       ...formData,
@@ -43,18 +44,15 @@ export default function AddPizzaPage() {
     const imageData = new FormData();
     imageData.append("image", image);
 
-    const uploadResponse = await fetch(
-      `https://api.imgbb.com/1/upload?key=${process.env.NEXT_PUBLIC_IMGBB_API_KEY}`,
-      {
-        method: "POST",
-        body: imageData,
-      }
-    );
+    const uploadResponse = await fetch("/api/upload", {
+      method: "POST",
+      body: imageData,
+    });
 
     const uploadResult = await uploadResponse.json();
 
-    if (!uploadResult.success) {
-      toast.error("Image upload failed");
+    if (!uploadResponse.ok) {
+      toast.error(uploadResult.message || "Image upload failed");
       setLoading(false);
       return;
     }
@@ -64,7 +62,7 @@ export default function AddPizzaPage() {
       body: JSON.stringify({
         ...formData,
         price: Number(formData.price),
-        image: uploadResult.data.url,
+        image: uploadResult.imageUrl,
       }),
     });
 
@@ -77,7 +75,6 @@ export default function AddPizzaPage() {
     }
 
     toast.success("Pizza submitted for approval!");
-
     router.push("/dashboard/vendor");
     router.refresh();
   };
@@ -105,9 +102,7 @@ export default function AddPizzaPage() {
           className="mt-8 space-y-5 rounded-xl border bg-white p-5 shadow-sm sm:p-8"
         >
           <div>
-            <label className="mb-2 block font-medium">
-              Pizza Name
-            </label>
+            <label className="mb-2 block font-medium">Pizza Name</label>
             <input
               name="name"
               value={formData.name}
@@ -119,9 +114,7 @@ export default function AddPizzaPage() {
           </div>
 
           <div>
-            <label className="mb-2 block font-medium">
-              Description
-            </label>
+            <label className="mb-2 block font-medium">Description</label>
             <textarea
               name="description"
               value={formData.description}
@@ -135,9 +128,7 @@ export default function AddPizzaPage() {
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <label className="mb-2 block font-medium">
-                Price (৳)
-              </label>
+              <label className="mb-2 block font-medium">Price (৳)</label>
               <input
                 name="price"
                 type="number"
@@ -151,9 +142,7 @@ export default function AddPizzaPage() {
             </div>
 
             <div>
-              <label className="mb-2 block font-medium">
-                Category
-              </label>
+              <label className="mb-2 block font-medium">Category</label>
               <select
                 name="category"
                 value={formData.category}
@@ -187,15 +176,11 @@ export default function AddPizzaPage() {
           </div>
 
           <div>
-            <label className="mb-2 block font-medium">
-              Pizza Image
-            </label>
+            <label className="mb-2 block font-medium">Pizza Image</label>
             <input
               type="file"
               accept="image/*"
-              onChange={(e) =>
-                setImage(e.target.files?.[0] || null)
-              }
+              onChange={(e) => setImage(e.target.files?.[0] || null)}
               className="w-full rounded-lg border border-gray-300 p-3"
               required
             />
