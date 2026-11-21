@@ -45,7 +45,7 @@ export default async function DashboardLayout({
       { label: "Dashboard", href: "/dashboard/customer", icon: LayoutDashboard },
       { label: "Browse Menu", href: "/menu", icon: Pizza },
       { label: "My Orders", href: "/dashboard/customer/orders", icon: ShoppingBag },
-      { label: "Settings", href: "/dashboard/customer/settings", icon: Settings },
+      { label: "Settings", href: "/dashboard/customer/profile", icon: Settings },
     ],
     vendor: [
       { label: "Dashboard", href: "/dashboard/vendor", icon: LayoutDashboard },
@@ -53,7 +53,7 @@ export default async function DashboardLayout({
       { label: "Manage Menu", href: "/dashboard/vendor/menu", icon: Pizza },
       { label: "Orders", href: "/dashboard/vendor/orders", icon: ClipboardList },
       { label: "Subscription", href: "/dashboard/vendor/subscription", icon: CreditCard },
-      { label: "Settings", href: "/dashboard/vendor/settings", icon: Settings },
+      { label: "Settings", href: "/dashboard/vendor/profile", icon: Settings },
     ],
     admin: [
       { label: "Dashboard", href: "/dashboard/admin", icon: LayoutDashboard },
@@ -61,7 +61,7 @@ export default async function DashboardLayout({
       { label: "Manage Menu", href: "/dashboard/admin/menu", icon: Pizza },
       { label: "Manage Orders", href: "/dashboard/admin/orders", icon: ClipboardList },
       { label: "Transactions", href: "/dashboard/admin/transactions", icon: CreditCard },
-      { label: "Settings", href: "/dashboard/admin/settings", icon: Settings },
+      { label: "Settings", href: "/dashboard/admin/profile", icon: Settings },
     ],
   };
 

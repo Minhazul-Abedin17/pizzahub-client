@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, MapPin, Pizza } from "lucide-react";
 import { getMenuItemById } from "@/app/lib/api";
-
+import OrderForm from "@/components/menu/order-form";
 
 export const instant = false;
 
@@ -74,18 +74,11 @@ const PizzaDetailsPage = async ({ params }: Props) => {
                 ৳{pizza.price}
               </p>
             </div>
-
-            <Link
-              href="/sign-in"
-              className="mt-7 rounded-lg bg-[#D93625] px-6 py-3 text-center font-semibold text-white transition hover:bg-[#b92b1d]"
-            >
-              Sign In to Order
-            </Link>
-
-            <p className="mt-3 text-center text-xs text-gray-500">
-              Sign in to continue with your order.
-            </p>
           </div>
+        </div>
+
+        <div className="mt-8">
+          <OrderForm menuItemId={pizza._id} />
         </div>
       </div>
     </main>

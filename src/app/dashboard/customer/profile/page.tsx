@@ -1,24 +1,55 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { UserRound, Mail, Image as ImageIcon, Save, Loader2 } from "lucide-react";
+import {
+  UserRound,
+  Mail,
+  Image as ImageIcon,
+  Save,
+  Loader2,
+} from "lucide-react";
 import { authClient } from "@/app/lib/auth-client";
+
+type UserWithRole = {
+  id: string;
+  name: string;
+  email: string;
+  image?: string | null;
+  role?: string;
+};
 
 export default function CustomerProfilePage() {
   const { data: session, isPending } = authClient.useSession();
 
-  const [name, setName] = useState("");
-  const [image, setImage] = useState("");
-  const [saving, setSaving] = useState(false);
+  if (isPending) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-red-600" />
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    if (session?.user) {
-      setName(session.user.name || "");
-      setImage(session.user.image || "");
-    }
-  }, [session]);
+  if (!session?.user) {
+    return (
+      <div className="rounded-xl border bg-white p-8 text-center">
+        <p className="text-neutral-600">
+          Please sign in to view your profile.
+        </p>
+      </div>
+    );
+  }
+
+  const user = session.user as UserWithRole;
+
+  return <ProfileForm key={user.id} user={user} />;
+}
+
+function ProfileForm({ user }: { user: UserWithRole }) {
+  const [name, setName] = useState(user.name || "");
+  const [image, setImage] = useState(user.image || "");
+  const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -33,7 +64,7 @@ export default function CustomerProfilePage() {
 
       const { error } = await authClient.updateUser({
         name: name.trim(),
-        image: image.trim() || null,
+        image: image.trim() || undefined,
       });
 
       if (error) {
@@ -49,22 +80,6 @@ export default function CustomerProfilePage() {
       setSaving(false);
     }
   };
-
-  if (isPending) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-red-600" />
-      </div>
-    );
-  }
-
-  if (!session?.user) {
-    return (
-      <div className="rounded-xl border bg-white p-8 text-center">
-        <p className="text-neutral-600">Please sign in to view your profile.</p>
-      </div>
-    );
-  }
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
@@ -111,7 +126,7 @@ export default function CustomerProfilePage() {
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400"
               />
               <input
-                value={session.user.email || ""}
+                value={user.email || ""}
                 readOnly
                 className="w-full cursor-not-allowed rounded-xl border border-neutral-200 bg-neutral-50 py-3 pl-10 pr-4 text-sm text-neutral-500 outline-none"
               />
@@ -166,7 +181,7 @@ export default function CustomerProfilePage() {
               Account Role
             </p>
             <p className="mt-1 text-sm capitalize text-neutral-500">
-              {session.user.role || "Customer"}
+              {user.role || "Customer"}
             </p>
             <p className="mt-1 text-xs text-neutral-400">
               Account role and subscription details cannot be changed from

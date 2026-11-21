@@ -1,28 +1,40 @@
+
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, X, UserCircle, LayoutDashboard, LogOut } from "lucide-react";
+import {
+  Menu,
+  X,
+  UserCircle,
+  LayoutDashboard,
+  LogOut,
+} from "lucide-react";
 
 import { toast } from "react-toastify";
 import { authClient, useSession } from "@/app/lib/auth-client";
 
+type UserWithRole = {
+  name?: string;
+  email?: string;
+  image?: string | null;
+  role?: string;
+};
+
 export default function Navbar() {
   const router = useRouter();
-
   const { data: session, isPending } = useSession();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
 
-  const user = session?.user as
-    | { name?: string; email?: string; role?: string }
-    | undefined;
+  const user = session?.user as UserWithRole | undefined;
 
   const role = user?.role || "customer";
+  const profileImage = user?.image;
 
   const dashboardLink =
     role === "admin"
@@ -58,6 +70,29 @@ export default function Navbar() {
 
   const closeMenu = () => {
     setMobileOpen(false);
+    setAccountOpen(false);
+  };
+
+  const ProfileAvatar = ({ size = 36 }: { size?: number }) => {
+    return (
+      <div
+        className="flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-orange-200 bg-orange-50"
+        style={{ width: size, height: size }}
+      >
+        {profileImage ? (
+          <Image
+            src={profileImage}
+            alt={user?.name || "Profile"}
+            width={size}
+            height={size}
+            unoptimized
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <UserCircle size={size * 0.65} className="text-red-600" />
+        )}
+      </div>
+    );
   };
 
   return (
@@ -101,27 +136,31 @@ export default function Navbar() {
                 onClick={() => setAccountOpen(!accountOpen)}
                 className="flex items-center gap-2 rounded-lg border border-orange-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-orange-50"
               >
-                <UserCircle size={20} className="text-red-600" />
+                <ProfileAvatar size={32} />
                 <span>{user?.name || "My Account"}</span>
               </button>
 
               {accountOpen && (
-                <div className="absolute right-0 mt-2 w-52 rounded-xl border bg-white p-2 shadow-lg">
-                  <div className="border-b px-3 py-2">
-                    <p className="truncate text-sm font-semibold text-gray-800">
-                      {user?.name}
-                    </p>
-                    <p className="truncate text-xs text-gray-500">
-                      {user?.email}
-                    </p>
-                    <p className="mt-1 text-xs capitalize text-red-600">
-                      {role}
-                    </p>
+                <div className="absolute right-0 mt-2 w-60 rounded-xl border bg-white p-2 shadow-lg">
+                  <div className="flex items-center gap-3 border-b px-3 py-3">
+                    <ProfileAvatar size={42} />
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-800">
+                        {user?.name || "My Account"}
+                      </p>
+                      <p className="truncate text-xs text-gray-500">
+                        {user?.email}
+                      </p>
+                      <p className="mt-1 text-xs capitalize text-red-600">
+                        {role}
+                      </p>
+                    </div>
                   </div>
 
                   <Link
                     href={dashboardLink}
-                    onClick={() => setAccountOpen(false)}
+                    onClick={closeMenu}
                     className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-orange-50"
                   >
                     <LayoutDashboard size={17} />
@@ -191,14 +230,20 @@ export default function Navbar() {
             {!isPending &&
               (session ? (
                 <>
-                  <div className="rounded-lg bg-orange-50 p-3">
-                    <p className="font-semibold text-gray-800">
-                      {user?.name || "My Account"}
-                    </p>
-                    <p className="text-xs text-gray-500">{user?.email}</p>
-                    <p className="mt-1 text-xs capitalize text-red-600">
-                      {role}
-                    </p>
+                  <div className="flex items-center gap-3 rounded-lg bg-orange-50 p-3">
+                    <ProfileAvatar size={48} />
+
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-gray-800">
+                        {user?.name || "My Account"}
+                      </p>
+                      <p className="truncate text-xs text-gray-500">
+                        {user?.email}
+                      </p>
+                      <p className="mt-1 text-xs capitalize text-red-600">
+                        {role}
+                      </p>
+                    </div>
                   </div>
 
                   <Link
