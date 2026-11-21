@@ -1,11 +1,16 @@
+
+
 import { API_URL } from "./api";
 import { authClient } from "./auth-client";
-
 
 export const authFetch = async (
   path: string,
   options: RequestInit = {}
 ) => {
+  if (!API_URL) {
+    throw new Error("API URL is missing. Check your frontend .env.local file.");
+  }
+
   const { data, error } = await authClient.token();
 
   if (error || !data?.token) {
@@ -20,8 +25,14 @@ export const authFetch = async (
     headers.set("Content-Type", "application/json");
   }
 
-  return fetch(`${API_URL}${path}`, {
+  console.log("API Request:", `${API_URL}${path}`);
+
+  const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
   });
+
+  console.log("API Response Status:", response.status);
+
+  return response;
 };
