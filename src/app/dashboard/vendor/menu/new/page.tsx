@@ -1,8 +1,8 @@
+
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useRef, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-
 import { toast } from "sonner";
 import { authFetch } from "@/app/lib/auth-fetch";
 
@@ -11,6 +11,8 @@ export default function AddPizzaPage() {
 
   const [loading, setLoading] = useState(false);
   const [image, setImage] = useState<File | null>(null);
+
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -31,6 +33,22 @@ export default function AddPizzaPage() {
     });
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      description: "",
+      price: "",
+      category: "",
+      location: "",
+    });
+
+    setImage(null);
+
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -41,42 +59,71 @@ export default function AddPizzaPage() {
 
     setLoading(true);
 
-    const imageData = new FormData();
-    imageData.append("image", image);
+    try {
+      // Upload pizza image
+      const imageData = new FormData();
+      imageData.append("image", image);
 
-    const uploadResponse = await fetch("/api/upload", {
-      method: "POST",
-      body: imageData,
-    });
+      const uploadResponse = await fetch("/api/upload", {
+        method: "POST",
+        body: imageData,
+      });
 
-    const uploadResult = await uploadResponse.json();
+      const uploadResult = await uploadResponse.json();
 
-    if (!uploadResponse.ok) {
-      toast.error(uploadResult.message || "Image upload failed");
+      if (!uploadResponse.ok) {
+        throw new Error(
+          uploadResult.message || "Image upload failed",
+        );
+      }
+
+      // Submit pizza details
+      const response = await authFetch("/api/menu-items", {
+        method: "POST",
+        body: JSON.stringify({
+          ...formData,
+          price: Number(formData.price),
+          image: uploadResult.imageUrl,
+        }),
+      });
+
+      const result = await response.json();
+
+      // Check free plan limit
+      if (
+        response.status === 403 &&
+        result.message?.toLowerCase().includes("free plan")
+      ) {
+        toast.error(
+          "Free plan limit reached! Please upgrade to Premium.",
+        );
+
+        router.push("/dashboard/vendor/subscription");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result.message || "Could not add pizza",
+        );
+      }
+
+      // Clear form after successful submission
+      resetForm();
+
+      toast.success("Pizza submitted for approval!");
+
+      router.push("/dashboard/vendor");
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong",
+      );
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const response = await authFetch("/api/menu-items", {
-      method: "POST",
-      body: JSON.stringify({
-        ...formData,
-        price: Number(formData.price),
-        image: uploadResult.imageUrl,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      toast.error(result.message || "Could not add pizza");
-      setLoading(false);
-      return;
-    }
-
-    toast.success("Pizza submitted for approval!");
-    router.push("/dashboard/vendor");
-    router.refresh();
   };
 
   const inputStyle =
@@ -102,7 +149,9 @@ export default function AddPizzaPage() {
           className="mt-8 space-y-5 rounded-xl border bg-white p-5 shadow-sm sm:p-8"
         >
           <div>
-            <label className="mb-2 block font-medium">Pizza Name</label>
+            <label className="mb-2 block font-medium">
+              Pizza Name
+            </label>
             <input
               name="name"
               value={formData.name}
@@ -114,7 +163,9 @@ export default function AddPizzaPage() {
           </div>
 
           <div>
-            <label className="mb-2 block font-medium">Description</label>
+            <label className="mb-2 block font-medium">
+              Description
+            </label>
             <textarea
               name="description"
               value={formData.description}
@@ -128,7 +179,9 @@ export default function AddPizzaPage() {
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <label className="mb-2 block font-medium">Price (৳)</label>
+              <label className="mb-2 block font-medium">
+                Price (৳)
+              </label>
               <input
                 name="price"
                 type="number"
@@ -142,7 +195,9 @@ export default function AddPizzaPage() {
             </div>
 
             <div>
-              <label className="mb-2 block font-medium">Category</label>
+              <label className="mb-2 block font-medium">
+                Category
+              </label>
               <select
                 name="category"
                 value={formData.category}
@@ -176,11 +231,16 @@ export default function AddPizzaPage() {
           </div>
 
           <div>
-            <label className="mb-2 block font-medium">Pizza Image</label>
+            <label className="mb-2 block font-medium">
+              Pizza Image
+            </label>
             <input
+              ref={imageInputRef}
               type="file"
               accept="image/*"
-              onChange={(e) => setImage(e.target.files?.[0] || null)}
+              onChange={(e) =>
+                setImage(e.target.files?.[0] || null)
+              }
               className="w-full rounded-lg border border-gray-300 p-3"
               required
             />
