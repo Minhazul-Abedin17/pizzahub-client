@@ -75,7 +75,11 @@ export default function AdminDashboardPage() {
   }
 
   if (!stats) {
-    return <p className="py-10 text-center text-neutral-500">No dashboard data available.</p>;
+    return (
+      <p className="py-10 text-center text-neutral-500">
+        No dashboard data available.
+      </p>
+    );
   }
 
   const cards = [
@@ -137,16 +141,20 @@ export default function AdminDashboardPage() {
 
   return (
     <section className="space-y-7">
+      {/* Page Header */}
       <div>
         <p className="text-sm font-semibold text-red-600">ADMIN PANEL</p>
+
         <h1 className="mt-1 text-2xl font-bold text-neutral-900">
           Dashboard Overview
         </h1>
+
         <p className="mt-1 text-sm text-neutral-500">
           Monitor users, menu items, orders, and platform activity.
         </p>
       </div>
 
+      {/* Statistics Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => {
           const Icon = card.icon;
@@ -159,6 +167,7 @@ export default function AdminDashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-neutral-500">{card.title}</p>
+
                   <h2 className="mt-2 text-3xl font-bold text-neutral-900">
                     {card.value}
                   </h2>
@@ -173,9 +182,12 @@ export default function AdminDashboardPage() {
         })}
       </div>
 
+      {/* Dashboard Bottom Sections */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        {/* Menu Status */}
         <div className="rounded-2xl border border-neutral-200 bg-white p-5">
           <h2 className="font-bold text-neutral-900">Menu Item Status</h2>
+
           <p className="mt-1 text-sm text-neutral-500">
             Overview of submitted menu items.
           </p>
@@ -185,10 +197,12 @@ export default function AdminDashboardPage() {
               className="bg-green-500"
               style={{ width: getPercent(stats.approvedItems) }}
             />
+
             <div
               className="bg-amber-400"
               style={{ width: getPercent(stats.pendingItems) }}
             />
+
             <div
               className="bg-red-500"
               style={{ width: getPercent(stats.rejectedItems) }}
@@ -197,15 +211,33 @@ export default function AdminDashboardPage() {
 
           <div className="mt-5 space-y-3">
             {[
-              { label: "Approved", value: stats.approvedItems, color: "bg-green-500" },
-              { label: "Pending", value: stats.pendingItems, color: "bg-amber-400" },
-              { label: "Rejected", value: stats.rejectedItems, color: "bg-red-500" },
+              {
+                label: "Approved",
+                value: stats.approvedItems,
+                color: "bg-green-500",
+              },
+              {
+                label: "Pending",
+                value: stats.pendingItems,
+                color: "bg-amber-400",
+              },
+              {
+                label: "Rejected",
+                value: stats.rejectedItems,
+                color: "bg-red-500",
+              },
             ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
+              <div
+                key={item.label}
+                className="flex items-center justify-between"
+              >
                 <div className="flex items-center gap-2 text-sm text-neutral-600">
-                  <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${item.color}`}
+                  />
                   {item.label}
                 </div>
+
                 <span className="font-semibold text-neutral-900">
                   {item.value}
                 </span>
@@ -214,17 +246,32 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
+        {/* Quick Actions */}
         <div className="rounded-2xl border border-neutral-200 bg-white p-5">
           <h2 className="font-bold text-neutral-900">Quick Actions</h2>
+
           <p className="mt-1 text-sm text-neutral-500">
             Manage your PizzaHub platform.
           </p>
 
           <div className="mt-5 space-y-3">
             {[
-              { title: "Manage Users", href: "/dashboard/admin/users" },
-              { title: "Review Menu Items", href: "/dashboard/admin/menu-items" },
-              { title: "View Transactions", href: "/dashboard/admin/transactions" },
+              {
+                title: "Manage Users",
+                href: "/dashboard/admin/users",
+              },
+              {
+                title: "Review Menu Items",
+                href: "/dashboard/admin/menu-items",
+              },
+              {
+                title: "Manage Orders",
+                href: "/dashboard/admin/orders",
+              },
+              {
+                title: "View Transactions",
+                href: "/dashboard/admin/transactions",
+              },
             ].map((item) => (
               <Link
                 key={item.href}
@@ -241,6 +288,7 @@ export default function AdminDashboardPage() {
             <p className="text-sm font-semibold text-orange-800">
               Pending Orders: {stats.pendingOrders}
             </p>
+
             <p className="mt-1 text-xs text-orange-700">
               Orders waiting for vendor review.
             </p>

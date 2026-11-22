@@ -11,6 +11,7 @@ import {
   Trash2,
   Eye,
   EyeOff,
+  Star,
 } from "lucide-react";
 import { authFetch } from "@/app/lib/auth-fetch";
 import { toast } from "react-toastify";
@@ -23,8 +24,9 @@ type MenuItem = {
   category: string;
   location: string;
   price: number;
-  status: string;
+  status: "pending" | "approved" | "rejected";
   isActive: boolean;
+  isFeatured?: boolean;
   vendorId: string;
   createdAt?: string;
 };
@@ -74,6 +76,7 @@ export default function AdminMenuItemsPage() {
         setLoading(true);
 
         const params = new URLSearchParams();
+
         if (search.trim()) params.set("search", search.trim());
         if (status !== "all") params.set("status", status);
 
@@ -87,7 +90,9 @@ export default function AdminMenuItemsPage() {
           throw new Error(data.message || "Failed to load menu items");
         }
 
-        if (!ignore) setItems(Array.isArray(data) ? data : []);
+        if (!ignore) {
+          setItems(Array.isArray(data) ? data : []);
+        }
       } catch (error) {
         if (!ignore) {
           toast.error(
@@ -164,6 +169,36 @@ export default function AdminMenuItemsPage() {
     }
   };
 
+  // Feature or remove a pizza from the home page
+  const toggleFeatured = async (item: MenuItem) => {
+    try {
+      setActionId(item._id);
+
+      const response = await authFetch(
+        `/api/admin/menu-items/${item._id}/featured`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ isFeatured: !item.isFeatured }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update featured status");
+      }
+
+      toast.success(data.message || "Featured status updated");
+      await loadItems();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Something went wrong"
+      );
+    } finally {
+      setActionId("");
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteItem) return;
 
@@ -182,9 +217,11 @@ export default function AdminMenuItemsPage() {
       }
 
       toast.success(data.message || "Pizza deleted successfully");
+
       setItems((previous) =>
         previous.filter((item) => item._id !== deleteItem._id)
       );
+
       setDeleteItem(null);
     } catch (error) {
       toast.error(
@@ -199,18 +236,22 @@ export default function AdminMenuItemsPage() {
     <section className="space-y-6">
       <div>
         <p className="text-sm font-semibold text-red-600">ADMIN PANEL</p>
+
         <h1 className="mt-1 text-2xl font-bold text-neutral-900">
           Manage Menu Items
         </h1>
+
         <p className="mt-1 text-sm text-neutral-500">
           Review, approve, reject, and manage submitted pizzas.
         </p>
       </div>
 
+      {/* Search and Filter */}
       <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -237,6 +278,7 @@ export default function AdminMenuItemsPage() {
         </p>
       </div>
 
+      {/* Menu Items */}
       {loading ? (
         <div className="flex justify-center rounded-2xl border bg-white py-16">
           <Loader2 className="h-8 w-8 animate-spin text-red-600" />
@@ -253,6 +295,7 @@ export default function AdminMenuItemsPage() {
               className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm"
             >
               <div className="flex flex-col sm:flex-row">
+                {/* Pizza Image */}
                 <div className="h-48 bg-orange-50 sm:h-auto sm:w-40 sm:shrink-0">
                   {item.image && (
                     <img
@@ -263,6 +306,7 @@ export default function AdminMenuItemsPage() {
                   )}
                 </div>
 
+                {/* Pizza Information */}
                 <div className="min-w-0 flex-1 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold capitalize text-red-600">
@@ -298,51 +342,111 @@ export default function AdminMenuItemsPage() {
                     ৳{item.price}
                   </p>
 
+                  {/* Featured Status */}
+                  {item.status === "approved" && (
+                    <p className="mt-2 flex items-center gap-1.5 text-xs font-medium">
+                      <Star
+                        size={14}
+                        className={
+                          item.isFeatured
+                            ? "fill-amber-400 text-amber-500"
+                            : "text-neutral-400"
+                        }
+                      />
+
+                      <span
+                        className={
+                          item.isFeatured
+                            ? "text-amber-600"
+                            : "text-neutral-500"
+                        }
+                      >
+                        {item.isFeatured
+                          ? "Featured on Home Page"
+                          : "Not Featured"}
+                      </span>
+                    </p>
+                  )}
+
+                  {/* Action Buttons */}
                   <div className="mt-4 flex flex-wrap gap-2">
                     {item.status === "pending" && (
                       <>
                         <button
+                          type="button"
                           onClick={() => updateStatus(item._id, "approved")}
                           disabled={actionId === item._id}
                           className="inline-flex items-center gap-1 rounded-lg bg-green-50 px-3 py-2 text-xs font-semibold text-green-700 hover:bg-green-100 disabled:opacity-50"
                         >
-                          <Check size={15} /> Approve
+                          <Check size={15} />
+                          Approve
                         </button>
 
                         <button
+                          type="button"
                           onClick={() => updateStatus(item._id, "rejected")}
                           disabled={actionId === item._id}
                           className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50"
                         >
-                          <X size={15} /> Reject
+                          <X size={15} />
+                          Reject
                         </button>
                       </>
                     )}
 
                     {item.status === "approved" && (
-                      <button
-                        onClick={() => toggleActive(item)}
-                        disabled={actionId === item._id}
-                        className="inline-flex items-center gap-1 rounded-lg bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-700 hover:bg-orange-100 disabled:opacity-50"
-                      >
-                        {item.isActive ? (
-                          <>
-                            <EyeOff size={15} /> Deactivate
-                          </>
-                        ) : (
-                          <>
-                            <Eye size={15} /> Activate
-                          </>
-                        )}
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => toggleActive(item)}
+                          disabled={actionId === item._id}
+                          className="inline-flex items-center gap-1 rounded-lg bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-700 hover:bg-orange-100 disabled:opacity-50"
+                        >
+                          {item.isActive ? (
+                            <>
+                              <EyeOff size={15} />
+                              Deactivate
+                            </>
+                          ) : (
+                            <>
+                              <Eye size={15} />
+                              Activate
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleFeatured(item)}
+                          disabled={actionId === item._id}
+                          className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-100 disabled:opacity-50"
+                        >
+                          {actionId === item._id ? (
+                            <Loader2 size={15} className="animate-spin" />
+                          ) : (
+                            <Star
+                              size={15}
+                              className={
+                                item.isFeatured ? "fill-current" : ""
+                              }
+                            />
+                          )}
+
+                          {item.isFeatured
+                            ? "Remove Featured"
+                            : "Make Featured"}
+                        </button>
+                      </>
                     )}
 
                     <button
+                      type="button"
                       onClick={() => setDeleteItem(item)}
                       disabled={actionId === item._id}
                       className="inline-flex items-center gap-1 rounded-lg bg-neutral-100 px-3 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-200 disabled:opacity-50"
                     >
-                      <Trash2 size={15} /> Delete
+                      <Trash2 size={15} />
+                      Delete
                     </button>
                   </div>
                 </div>
@@ -352,12 +456,14 @@ export default function AdminMenuItemsPage() {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
       {deleteItem && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
             <h2 className="text-lg font-bold text-neutral-900">
               Delete Menu Item?
             </h2>
+
             <p className="mt-2 text-sm text-neutral-500">
               Are you sure you want to delete {deleteItem.name}? This action
               cannot be undone.
@@ -365,6 +471,7 @@ export default function AdminMenuItemsPage() {
 
             <div className="mt-6 flex justify-end gap-3">
               <button
+                type="button"
                 onClick={() => setDeleteItem(null)}
                 disabled={actionId === deleteItem._id}
                 className="rounded-lg border px-4 py-2 text-sm font-semibold text-neutral-600"
@@ -373,6 +480,7 @@ export default function AdminMenuItemsPage() {
               </button>
 
               <button
+                type="button"
                 onClick={handleDelete}
                 disabled={actionId === deleteItem._id}
                 className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
