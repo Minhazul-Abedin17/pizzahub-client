@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Check,
@@ -27,42 +27,53 @@ export default function VendorSubscriptionPage() {
   const [subscription, setSubscription] =
     useState<Subscription | null>(null);
 
-  // Load current subscription
-  useEffect(() => {
-    const loadSubscription = async () => {
-      try {
-        const response = await authFetch("/api/subscription/me");
-        const data = await response.json();
+  // Load subscription details
+  const loadSubscription = useCallback(async () => {
+    try {
+      const response = await authFetch("/api/subscription/me");
+      const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(
-            data.message || "Failed to load subscription"
-          );
-        }
-
-        setSubscription(data);
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Could not load subscription"
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to load subscription"
         );
-      } finally {
-        setChecking(false);
       }
-    };
 
-    loadSubscription();
+      setSubscription(data);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not load subscription"
+      );
+    } finally {
+      setChecking(false);
+    }
   }, []);
 
-  const isPremium =
-    subscription?.plan?.toLowerCase() === "premium";
+  useEffect(() => {
+    loadSubscription();
+  }, [loadSubscription]);
 
+  // Check Premium status
+  const isPremium =
+    subscription?.plan?.toLowerCase() === "premium" &&
+    subscription?.status?.toLowerCase() === "active";
+
+  // Subscribe to Premium
   const handleSubscribe = async () => {
+    if (loading || checking) return;
+
+    // Already Premium
+    if (isPremium) {
+      toast.info("You already have Premium access!");
+      return;
+    }
+
     try {
       setLoading(true);
 
-      // Check subscription again before checkout
+      // Verify subscription from backend
       const statusResponse = await authFetch(
         "/api/subscription/me"
       );
@@ -77,8 +88,12 @@ export default function VendorSubscriptionPage() {
 
       setSubscription(statusData);
 
-      if (statusData.plan?.toLowerCase() === "premium") {
-        toast.success("Your Premium subscription is already active!");
+      const alreadySubscribed =
+        statusData.plan?.toLowerCase() === "premium" &&
+        statusData.status?.toLowerCase() === "active";
+
+      if (alreadySubscribed) {
+        toast.info("You already have Premium access!");
         return;
       }
 
@@ -92,9 +107,15 @@ export default function VendorSubscriptionPage() {
 
       const data = await response.json();
 
+      if (response.status === 409) {
+        toast.info("You already have Premium access!");
+        await loadSubscription();
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(
-          data.message || "Unable to start checkout"
+          data.message || "Try later!"
         );
       }
 
@@ -102,12 +123,9 @@ export default function VendorSubscriptionPage() {
         throw new Error("Stripe checkout URL was not returned");
       }
 
-      toast.success("Redirecting to Stripe...");
-
+      // Redirect to Stripe Checkout
       window.location.href = data.url;
     } catch (error) {
-      console.error("Subscription Error:", error);
-
       toast.error(
         error instanceof Error
           ? error.message
@@ -122,6 +140,7 @@ export default function VendorSubscriptionPage() {
     <div className="min-h-screen bg-[#FFF9F0] p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-5xl">
 
+        {/* Back Button */}
         <button
           onClick={() => router.back()}
           className="mb-6 flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[#D93625]"
@@ -130,6 +149,7 @@ export default function VendorSubscriptionPage() {
           Go Back
         </button>
 
+        {/* Page Heading */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 text-[#D93625]">
             <Crown size={28} />
@@ -144,6 +164,7 @@ export default function VendorSubscriptionPage() {
           </p>
         </div>
 
+        {/* Premium Card */}
         <div className="mx-auto max-w-xl rounded-2xl border border-orange-200 bg-white p-6 shadow-sm sm:p-8">
 
           <div className="mb-6">
@@ -160,6 +181,7 @@ export default function VendorSubscriptionPage() {
             </p>
           </div>
 
+          {/* Features */}
           <div className="space-y-4 border-y border-gray-100 py-6">
             {[
               "Unlimited active pizza listings",
@@ -168,11 +190,15 @@ export default function VendorSubscriptionPage() {
               "Grow your business on PizzaHub",
               "Premium vendor benefits",
             ].map((feature) => (
-              <div key={feature} className="flex items-center gap-3">
+              <div
+                key={feature}
+                className="flex items-center gap-3"
+              >
                 <Check
                   className="shrink-0 text-green-600"
                   size={19}
                 />
+
                 <span className="text-sm text-gray-700">
                   {feature}
                 </span>
@@ -184,13 +210,16 @@ export default function VendorSubscriptionPage() {
           <div className="mt-6 rounded-xl border border-orange-100 bg-orange-50 p-4">
             {checking ? (
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Loader2 size={18} className="animate-spin" />
+                <Loader2
+                  size={18}
+                  className="animate-spin"
+                />
                 Checking subscription...
               </div>
             ) : isPremium ? (
               <div className="flex items-center gap-2">
                 <ShieldCheck
-                  size={22}
+                  size={24}
                   className="text-green-600"
                 />
 
@@ -200,7 +229,7 @@ export default function VendorSubscriptionPage() {
                   </p>
 
                   <p className="text-xs text-gray-600">
-                    Your vendor account already has Premium access.
+                    You already have Lifetime Premium access.
                   </p>
                 </div>
               </div>
@@ -211,32 +240,38 @@ export default function VendorSubscriptionPage() {
                 </p>
 
                 <p className="mt-1 text-xs text-gray-600">
-                  Upgrade to Premium to unlock all benefits.
+                  Pay once and enjoy Premium benefits permanently.
                 </p>
               </div>
             )}
           </div>
 
-          {/* Upgrade Button */}
+          {/* Subscribe Button */}
           <button
             onClick={handleSubscribe}
-            disabled={loading || checking || isPremium}
+            disabled={loading || checking}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#D93625] px-5 py-3.5 font-semibold text-white transition hover:bg-[#b92d20] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {checking ? (
               <>
-                <Loader2 size={19} className="animate-spin" />
+                <Loader2
+                  size={19}
+                  className="animate-spin"
+                />
                 Checking Plan...
               </>
             ) : loading ? (
               <>
-                <Loader2 size={19} className="animate-spin" />
+                <Loader2
+                  size={19}
+                  className="animate-spin"
+                />
                 Processing...
               </>
             ) : isPremium ? (
               <>
                 <ShieldCheck size={19} />
-                Premium Active
+                Already Subscribed
               </>
             ) : (
               <>
@@ -247,7 +282,7 @@ export default function VendorSubscriptionPage() {
           </button>
 
           <p className="mt-4 text-center text-xs text-gray-500">
-            Secure payment powered by Stripe.
+            One-time secure payment powered by Stripe.
           </p>
         </div>
       </div>
