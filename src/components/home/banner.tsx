@@ -1,165 +1,342 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
-  Clock,
+  Bike,
+  Check,
   Flame,
-  MapPin,
+  PackageCheck,
   ShieldCheck,
-  Sparkles,
+  Star,
+  Truck,
 } from "lucide-react";
 
-const Banner = () => {
+/* ---------- data ---------- */
+const words = ["hot.", "fresh.", "fast.", "local."];
+
+const orders = [
+  { item: "Pepperoni Feast", who: "Rafi · Agrabad", price: "৳349" },
+  { item: "BBQ Chicken", who: "Nusrat · GEC Circle", price: "৳429" },
+  { item: "Four Cheese", who: "Tanvir · Khulshi", price: "৳389" },
+];
+
+const steps = [
+  { label: "Confirmed", icon: Check },
+  { label: "Baking", icon: Flame },
+  { label: "On the way", icon: Bike },
+  { label: "Delivered", icon: PackageCheck },
+];
+
+const perks = [
+  {
+    icon: Flame,
+    title: "Oven fresh",
+    text: "Every pizza is baked to order",
+    tone: "bg-red-50 text-red-600",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Verified vendors",
+    text: "Only quality-checked kitchens",
+    tone: "bg-emerald-50 text-emerald-600",
+  },
+  {
+    icon: Truck,
+    title: "Quick dispatch",
+    text: "Hot to your door, tracked live",
+    tone: "bg-amber-50 text-amber-600",
+  },
+];
+
+// Fixed values (no Math.random) so server and client render the same HTML
+const embers = [
+  { left: "6%", size: 6, delay: 0, dur: 9 },
+  { left: "14%", size: 4, delay: 2.5, dur: 11 },
+  { left: "23%", size: 8, delay: 5, dur: 10 },
+  { left: "32%", size: 5, delay: 1, dur: 12 },
+  { left: "41%", size: 4, delay: 6.5, dur: 9 },
+  { left: "50%", size: 7, delay: 3, dur: 11 },
+  { left: "58%", size: 5, delay: 7.5, dur: 10 },
+  { left: "66%", size: 4, delay: 0.8, dur: 12 },
+  { left: "74%", size: 8, delay: 4.2, dur: 9 },
+  { left: "82%", size: 5, delay: 8, dur: 11 },
+  { left: "90%", size: 6, delay: 2, dur: 10 },
+  { left: "96%", size: 4, delay: 5.8, dur: 12 },
+];
+
+/* ---------- count-up number ---------- */
+const CountUp = ({
+  to,
+  decimals = 0,
+  suffix = "",
+}: {
+  to: number;
+  decimals?: number;
+  suffix?: string;
+}) => {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    const duration = 1800;
+    const start = performance.now();
+    let frame = 0;
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(to * eased);
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [to]);
+
   return (
-    <section className="relative overflow-hidden bg-[#FFF8F0]">
-      <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-red-500/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 left-1/4 h-72 w-72 rounded-full bg-amber-400/15 blur-3xl" />
+    <>
+      {value.toFixed(decimals)}
+      {suffix}
+    </>
+  );
+};
 
-      <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 md:grid-cols-12 md:gap-8 md:py-16 lg:px-8 lg:py-20">
-        {/* Left Content */}
-        <div className="space-y-6 text-center md:col-span-6 md:text-left lg:col-span-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-red-200/80 bg-white px-4 py-1.5 text-xs font-semibold tracking-wide text-red-600 shadow-2xs sm:text-sm">
-            <Sparkles className="h-4 w-4 text-amber-500" />
-            <span>Curated Local Pizza Marketplace</span>
-          </div>
+/* ---------- banner ---------- */
+const Banner = () => {
+  const [wordIndex, setWordIndex] = useState(0);
+  const [tick, setTick] = useState(0);
 
-          <h1 className="text-4xl font-extrabold tracking-tight text-neutral-900 sm:text-5xl lg:text-[3.35rem] lg:leading-[1.08]">
-            Stone-Baked Pizzas From{" "}
-            <span className="mt-1 block text-red-600">
-              Your Neighborhood Kitchens
-            </span>
-          </h1>
+  // Rotating headline word
+  useEffect(() => {
+    const id = setInterval(
+      () => setWordIndex((i) => (i + 1) % words.length),
+      2200
+    );
+    return () => clearInterval(id);
+  }, []);
 
-          <p className="mx-auto max-w-xl text-sm leading-relaxed text-neutral-600 sm:text-base lg:text-[1.05rem] md:mx-0">
-            Browse verified local vendors, compare freshly crafted pies, and
-            order hot classics, cheesy specials, and loaded chicken favorites
-            with effortless tracking.
-          </p>
+  // Live order tracker: 5 ticks per order (4 steps + a short pause on "Delivered")
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 1500);
+    return () => clearInterval(id);
+  }, []);
 
-          {/* Primary Actions */}
-          <div className="flex flex-col items-stretch justify-center gap-3 pt-1 sm:flex-row sm:items-center md:justify-start">
-            <Link
-              href="/menu"
-              className="group inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm shadow-red-600/20 transition duration-200 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-            >
-              <span>Browse Pizza Menu</span>
-              <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-            </Link>
+  const order = orders[Math.floor(tick / 5) % orders.length];
+  const step = Math.min(tick % 5, 3);
 
-            <Link
-              href="/sign-in"
-              className="inline-flex items-center justify-center rounded-xl border border-neutral-300 bg-white px-6 py-3.5 text-sm font-semibold text-neutral-800 shadow-2xs transition duration-200 hover:border-red-300 hover:bg-red-50/50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-            >
-              Sign In to Order
-            </Link>
-          </div>
+  return (
+    <div className="relative bg-[#FFF8F0] pb-10 sm:pb-14">
+      <style>{`
+        @keyframes ph-rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+        @keyframes ph-kenburns { from { transform: scale(1); } to { transform: scale(1.14) translate(-1.5%, -1%); } }
+        @keyframes ph-ember {
+          0% { transform: translateY(0) translateX(0); opacity: 0; }
+          15% { opacity: .9; }
+          100% { transform: translateY(-34rem) translateX(24px); opacity: 0; }
+        }
+        @keyframes ph-word { from { opacity: 0; transform: translateY(70%); } to { opacity: 1; transform: none; } }
+        @keyframes ph-swap { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+        .ph-rise { animation: ph-rise .8s cubic-bezier(.2,.7,.2,1) both; }
+        .ph-kenburns { animation: ph-kenburns 26s ease-in-out infinite alternate; }
+        .ph-ember { animation: ph-ember var(--dur) linear var(--delay) infinite; }
+        .ph-word { animation: ph-word .55s cubic-bezier(.2,.7,.2,1) both; }
+        .ph-swap { animation: ph-swap .45s ease-out both; }
+        @media (prefers-reduced-motion: reduce) {
+          .ph-rise, .ph-kenburns, .ph-ember, .ph-word, .ph-swap { animation: none; }
+        }
+      `}</style>
 
-          {/* Clean Feature Strip */}
-          <div className="grid grid-cols-1 gap-3 border-t border-neutral-200/80 pt-5 text-left sm:grid-cols-3">
-            <div className="flex items-center gap-2.5 rounded-xl border border-neutral-200/70 bg-white/90 px-3.5 py-2.5 shadow-2xs">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600">
-                <Flame className="h-4 w-4" />
+      {/* ---------- HERO ---------- */}
+      <section className="relative isolate overflow-hidden">
+        {/* Background photo with slow cinematic zoom */}
+        <div className="absolute inset-0 -z-30 overflow-hidden">
+          <Image
+            src="/banner.jpg"
+            alt="Freshly baked artisan pizza on PizzaHub"
+            fill
+            priority
+            sizes="100vw"
+            className="ph-kenburns object-cover"
+          />
+        </div>
+
+        {/* Readability overlay */}
+        <div className="absolute inset-0 -z-20 bg-gradient-to-t from-neutral-950/90 via-neutral-950/65 to-neutral-950/35 md:bg-gradient-to-r md:from-neutral-950/90 md:via-neutral-950/60 md:to-neutral-950/10" />
+
+        {/* Rising oven embers */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          {embers.map((e, i) => (
+            <span
+              key={i}
+              className="ph-ember absolute bottom-0 rounded-full bg-amber-400 shadow-[0_0_12px_3px_rgba(251,146,60,0.7)]"
+              style={
+                {
+                  left: e.left,
+                  width: e.size,
+                  height: e.size,
+                  "--dur": `${e.dur}s`,
+                  "--delay": `${e.delay}s`,
+                } as React.CSSProperties
+              }
+            />
+          ))}
+        </div>
+
+        <div className="mx-auto flex min-h-[36rem] max-w-7xl items-center px-4 pb-28 pt-14 sm:min-h-[40rem] sm:px-6 sm:pb-32 sm:pt-20 lg:min-h-[44rem] lg:px-8">
+          <div className="grid w-full items-center gap-10 lg:grid-cols-12">
+            {/* ---------- Copy ---------- */}
+            <div className="ph-rise text-center md:text-left lg:col-span-7">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-medium text-white backdrop-blur-md sm:text-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+                </span>
+                Ovens are hot. Kitchens are open.
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-bold text-neutral-900">
-                  Oven Fresh
-                </p>
-                <p className="truncate text-[11px] text-neutral-500">
-                  Baked to order
-                </p>
+
+              <h1 className="mt-6 text-4xl font-black leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl">
+                Real pizza.
+                <br />
+                Made nearby.
+                <span className="mt-1 block overflow-hidden pb-2">
+                  <span className="text-white">Delivered </span>
+                  <span
+                    key={words[wordIndex]}
+                    className="ph-word inline-block bg-gradient-to-r from-amber-300 via-orange-400 to-red-500 bg-clip-text text-transparent"
+                  >
+                    {words[wordIndex]}
+                  </span>
+                </span>
+              </h1>
+
+              <p className="mx-auto mt-6 max-w-xl text-base leading-8 text-neutral-200 sm:text-lg md:mx-0">
+                Hand-stretched crusts, bold sauces and generous toppings from
+                verified kitchens in your neighborhood. Pick your pie, place
+                the order, and track it to your door.
+              </p>
+
+              <div className="mt-8 flex justify-center md:justify-start">
+                <Link
+                  href="/menu"
+                  className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-red-600 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-red-600/40 transition duration-200 hover:-translate-y-0.5 hover:bg-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900 sm:w-auto"
+                >
+                  Browse pizza menu
+                  <ArrowRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
+                </Link>
               </div>
+
+              {/* Animated stats */}
+              <dl className="mx-auto mt-10 grid max-w-md grid-cols-3 gap-4 border-t border-white/15 pt-6 text-center md:mx-0 md:text-left">
+                <div>
+                  <dt className="text-2xl font-black text-white sm:text-3xl">
+                    <CountUp to={10} suffix="k+" />
+                  </dt>
+                  <dd className="mt-1 text-xs text-neutral-300 sm:text-sm">Orders delivered</dd>
+                </div>
+                <div>
+                  <dt className="text-2xl font-black text-white sm:text-3xl">
+                    <CountUp to={120} suffix="+" />
+                  </dt>
+                  <dd className="mt-1 text-xs text-neutral-300 sm:text-sm">Local kitchens</dd>
+                </div>
+                <div>
+                  <dt className="flex items-center justify-center gap-1 text-2xl font-black text-white sm:text-3xl md:justify-start">
+                    <CountUp to={4.9} decimals={1} />
+                    <Star className="h-5 w-5 text-amber-400" fill="currentColor" />
+                  </dt>
+                  <dd className="mt-1 text-xs text-neutral-300 sm:text-sm">Average rating</dd>
+                </div>
+              </dl>
             </div>
 
-            <div className="flex items-center gap-2.5 rounded-xl border border-neutral-200/70 bg-white/90 px-3.5 py-2.5 shadow-2xs">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                <ShieldCheck className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-bold text-neutral-900">
-                  Verified Vendors
-                </p>
-                <p className="truncate text-[11px] text-neutral-500">
-                  Quality checked
-                </p>
-              </div>
-            </div>
+            {/* ---------- Live order tracker ---------- */}
+            <div className="ph-rise [animation-delay:200ms] lg:col-span-5 lg:flex lg:justify-end">
+              <div className="mx-auto w-full max-w-sm rounded-3xl border border-white/20 bg-white/10 p-5 text-white shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-6 lg:mx-0">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-2 text-sm font-semibold">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                    </span>
+                    Live orders
+                  </span>
+                  <span className="text-xs text-neutral-300">Chattogram</span>
+                </div>
 
-            <div className="flex items-center gap-2.5 rounded-xl border border-neutral-200/70 bg-white/90 px-3.5 py-2.5 shadow-2xs">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                <Clock className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-bold text-neutral-900">
-                  Quick Dispatch
-                </p>
-                <p className="truncate text-[11px] text-neutral-500">
-                  Hot to your door
-                </p>
+                {/* Current order (re-animates when it changes) */}
+                <div key={order.item} className="ph-swap mt-5 flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="truncate text-lg font-extrabold leading-tight sm:text-xl">
+                      {order.item}
+                    </p>
+                    <p className="mt-1 truncate text-sm text-neutral-300">{order.who}</p>
+                  </div>
+                  <p className="shrink-0 text-xl font-black text-amber-300">{order.price}</p>
+                </div>
+
+                {/* Progress */}
+                <div className="mt-6">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-amber-300 to-red-500 transition-[width] duration-700 ease-out"
+                      style={{ width: `${(step / 3) * 100}%` }}
+                    />
+                  </div>
+
+                  <ol className="mt-4 grid grid-cols-4 gap-1 text-center">
+                    {steps.map(({ label, icon: Icon }, i) => {
+                      const done = i <= step;
+                      return (
+                        <li key={label} className="flex flex-col items-center gap-1.5">
+                          <span
+                            className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-500 ${
+                              done
+                                ? "scale-100 border-transparent bg-red-600 text-white shadow-lg shadow-red-600/40"
+                                : "scale-90 border-white/20 bg-white/5 text-neutral-400"
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </span>
+                          <span
+                            className={`text-[10px] font-medium leading-tight transition-colors duration-500 sm:text-xs ${
+                              done ? "text-white" : "text-neutral-400"
+                            }`}
+                          >
+                            {label}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Right Showcase Image */}
-        <div className="relative md:col-span-6 lg:col-span-6">
-          <div className="relative mx-auto max-w-xl">
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-xl shadow-neutral-900/10">
-              <Image
-                src="/banner.jpg"
-                alt="Freshly baked artisan pizza on PizzaHub"
-                fill
-                priority
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover transition duration-700 hover:scale-103"
-              />
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-neutral-950/55 via-neutral-950/10 to-transparent" />
-
-              {/* Bottom Overlay Caption */}
-              <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-end justify-between gap-3 p-4 sm:p-5">
-                <div className="space-y-0.5 text-white">
-                  <span className="inline-block rounded-md bg-red-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider">
-                    House Favorite
-                  </span>
-                  <p className="text-base font-bold sm:text-lg">
-                    Wood-Fired Classics &amp; Specials
-                  </p>
-                </div>
-
-                <div className="inline-flex items-center gap-1.5 rounded-xl bg-white/95 px-3 py-1.5 text-xs font-semibold text-neutral-800 shadow-sm backdrop-blur-xs">
-                  <MapPin className="h-3.5 w-3.5 text-red-600" />
-                  <span>Local Kitchens</span>
-                </div>
+      {/* ---------- PERKS BAR ---------- */}
+      <div className="relative z-10 mx-auto -mt-16 max-w-6xl px-4 sm:-mt-20 sm:px-6 lg:px-8">
+        <div className="grid divide-y divide-neutral-100 overflow-hidden rounded-3xl border border-neutral-200/70 bg-white shadow-xl shadow-neutral-900/10 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          {perks.map(({ icon: Icon, title, text, tone }) => (
+            <div
+              key={title}
+              className="flex items-center gap-4 px-6 py-5 transition duration-200 hover:bg-[#FFF8F0]"
+            >
+              <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${tone}`}>
+                <Icon className="h-6 w-6" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-base font-bold text-neutral-900">{title}</p>
+                <p className="text-sm text-neutral-500">{text}</p>
               </div>
             </div>
-
-            {/* Clean Floating Highlight Card */}
-            <div className="mt-4 flex items-center justify-between gap-4 rounded-2xl border border-neutral-200/80 bg-white px-4 py-3 shadow-sm sm:mx-4 sm:-mt-6 sm:relative sm:z-10">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-sm font-bold text-amber-600 ring-1 ring-amber-200/60">
-                  4.9
-                </span>
-                <div>
-                  <p className="text-xs font-bold text-neutral-900 sm:text-sm">
-                    Loved by Local Pizza Fans
-                  </p>
-                  <p className="text-xs text-neutral-500">
-                    Hand-stretched crust, bold sauces &amp; generous toppings
-                  </p>
-                </div>
-              </div>
-
-              <Link
-                href="/menu"
-                className="hidden shrink-0 text-xs font-semibold text-red-600 transition hover:text-red-700 sm:inline-flex sm:items-center sm:gap-1"
-              >
-                <span>See Menu</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 

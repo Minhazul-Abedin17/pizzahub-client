@@ -3,10 +3,11 @@
 
 import { useEffect, useState } from "react";
 import {
-  CreditCard,
   Loader2,
   Search,
   Receipt,
+  CheckCircle,
+  Clock,
 } from "lucide-react";
 import { authFetch } from "@/app/lib/auth-fetch";
 import { toast } from "react-toastify";
@@ -20,6 +21,7 @@ type Transaction = {
   type?: string;
   status: string;
   stripeInvoiceId?: string;
+  stripeSessionId?: string;
   createdAt: string;
 };
 
@@ -33,6 +35,8 @@ export default function AdminTransactionsPage() {
 
     const loadTransactions = async () => {
       try {
+        setLoading(true);
+
         const response = await authFetch("/api/admin/transactions");
         const data = await response.json();
 
@@ -68,13 +72,18 @@ export default function AdminTransactionsPage() {
       transaction.vendorName?.toLowerCase().includes(searchText) ||
       transaction.vendorEmail?.toLowerCase().includes(searchText) ||
       transaction.status?.toLowerCase().includes(searchText) ||
+      transaction.type?.toLowerCase().includes(searchText) ||
       transaction.stripeInvoiceId?.toLowerCase().includes(searchText)
     );
   });
 
-  const totalPaid = transactions
-    .filter((transaction) => transaction.status === "paid")
-    .reduce((total, transaction) => total + Number(transaction.amount || 0), 0);
+  const paidTransactions = transactions.filter(
+    (transaction) => transaction.status?.toLowerCase() === "paid"
+  ).length;
+
+  const pendingTransactions = transactions.filter(
+    (transaction) => transaction.status?.toLowerCase() === "pending"
+  ).length;
 
   return (
     <section className="space-y-6">
@@ -88,7 +97,7 @@ export default function AdminTransactionsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
@@ -106,16 +115,27 @@ export default function AdminTransactionsPage() {
         <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-neutral-500">Total Paid Amount</p>
+              <p className="text-sm text-neutral-500">Paid Transactions</p>
               <h2 className="mt-2 text-3xl font-bold text-neutral-900">
-                {totalPaid.toLocaleString()}
+                {paidTransactions}
               </h2>
-              <p className="mt-1 text-xs text-neutral-400">
-                Amount shown in transaction currency
-              </p>
             </div>
             <div className="rounded-xl bg-green-50 p-3 text-green-600">
-              <CreditCard size={23} />
+              <CheckCircle size={23} />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-neutral-500">Pending Transactions</p>
+              <h2 className="mt-2 text-3xl font-bold text-neutral-900">
+                {pendingTransactions}
+              </h2>
+            </div>
+            <div className="rounded-xl bg-amber-50 p-3 text-amber-600">
+              <Clock size={23} />
             </div>
           </div>
         </div>
@@ -127,7 +147,7 @@ export default function AdminTransactionsPage() {
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by vendor, email, status, or invoice ID..."
+            placeholder="Search by vendor, email, plan, status, or invoice ID..."
             className="w-full rounded-xl border border-neutral-200 py-3 pl-10 pr-4 text-sm outline-none focus:border-red-500"
           />
         </div>
@@ -147,7 +167,7 @@ export default function AdminTransactionsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] text-left text-sm">
+            <table className="w-full min-w-[850px] text-left text-sm">
               <thead className="bg-neutral-50 text-neutral-600">
                 <tr>
                   <th className="px-5 py-4 font-semibold">Vendor</th>
@@ -159,50 +179,65 @@ export default function AdminTransactionsPage() {
               </thead>
 
               <tbody className="divide-y divide-neutral-100">
-                {filteredTransactions.map((transaction) => (
-                  <tr key={transaction._id} className="hover:bg-neutral-50">
-                    <td className="px-5 py-4">
-                      <p className="font-semibold text-neutral-800">
-                        {transaction.vendorName || "Vendor"}
-                      </p>
-                      <p className="mt-1 text-xs text-neutral-500">
-                        {transaction.vendorEmail || "—"}
-                      </p>
-                    </td>
+                {filteredTransactions.map((transaction) => {
+                  const paid =
+                    transaction.status?.toLowerCase() === "paid";
 
-                    <td className="px-5 py-4 capitalize text-neutral-600">
-                      {transaction.type || "Subscription"}
-                    </td>
+                  return (
+                    <tr
+                      key={transaction._id}
+                      className="hover:bg-neutral-50"
+                    >
+                      <td className="px-5 py-4">
+                        <p className="font-semibold text-neutral-800">
+                          {transaction.vendorName || "Unknown Vendor"}
+                        </p>
+                        <p className="mt-1 text-xs text-neutral-500">
+                          {transaction.vendorEmail || "—"}
+                        </p>
+                      </td>
 
-                    <td className="px-5 py-4 font-semibold text-neutral-800">
-                      {Number(transaction.amount || 0).toLocaleString()}{" "}
-                      {(transaction.currency || "").toUpperCase()}
-                    </td>
+                      <td className="px-5 py-4 capitalize text-neutral-600">
+                        {transaction.type || "Premium Subscription"}
+                      </td>
 
-                    <td className="px-5 py-4">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                          transaction.status === "paid"
-                            ? "bg-green-50 text-green-600"
-                            : "bg-amber-50 text-amber-700"
-                        }`}
-                      >
-                        {transaction.status}
-                      </span>
-                    </td>
+                      <td className="px-5 py-4 font-semibold text-neutral-800">
+                        {Number(transaction.amount || 0).toLocaleString()}{" "}
+                        {(transaction.currency || "").toUpperCase()}
+                      </td>
 
-                    <td className="px-5 py-4 text-neutral-500">
-                      {transaction.createdAt
-                        ? new Date(transaction.createdAt).toLocaleDateString()
-                        : "—"}
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-5 py-4">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                            paid
+                              ? "bg-green-50 text-green-600"
+                              : "bg-amber-50 text-amber-700"
+                          }`}
+                        >
+                          {transaction.status || "Unknown"}
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-4 text-neutral-500">
+                        {transaction.createdAt
+                          ? new Date(
+                              transaction.createdAt
+                            ).toLocaleDateString()
+                          : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
       </div>
+
+      <p className="text-xs text-neutral-400">
+        Transaction records are read-only. Payment status is managed by the
+        verified payment webhook.
+      </p>
     </section>
   );
 }
