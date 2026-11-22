@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
-import { ToastContainer } from "react-toastify";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "PizzaHub - Fresh Pizza Delivered",
@@ -19,20 +19,7 @@ export default function RootLayout({
       <body className="bg-[#FFF9F0] text-[#29211D]">
         <Navbar />
         {children}
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-          toastClassName="custom-toast"
-          progressClassName="custom-toast-progress"
-        />
+        <Toaster position="top-right" richColors />
         <Footer />
       </body>
     </html>

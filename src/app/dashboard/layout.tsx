@@ -58,7 +58,7 @@ export default async function DashboardLayout({
     admin: [
       { label: "Dashboard", href: "/dashboard/admin", icon: LayoutDashboard },
       { label: "Manage Users", href: "/dashboard/admin/users", icon: Users },
-      { label: "Manage Menu", href: "/dashboard/admin/menu", icon: Pizza },
+      { label: "Manage Menu", href: "/dashboard/admin/menu-items", icon: Pizza },
       { label: "Manage Orders", href: "/dashboard/admin/orders", icon: ClipboardList },
       { label: "Transactions", href: "/dashboard/admin/transactions", icon: CreditCard },
       { label: "Settings", href: "/dashboard/admin/profile", icon: Settings },

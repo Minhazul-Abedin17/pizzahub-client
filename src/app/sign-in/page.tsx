@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Pizza } from "lucide-react";
 import { authClient } from "../lib/auth-client";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 

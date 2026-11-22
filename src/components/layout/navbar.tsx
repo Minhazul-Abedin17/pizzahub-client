@@ -13,7 +13,7 @@ import {
   LogOut,
 } from "lucide-react";
 
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import { authClient, useSession } from "@/app/lib/auth-client";
 
 type UserWithRole = {

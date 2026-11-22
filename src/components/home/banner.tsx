@@ -6,9 +6,9 @@ import Link from "next/link";
 import {
   ArrowRight,
   Bike,
-  Check,
+  ChefHat,
   Flame,
-  PackageCheck,
+  Pizza,
   ShieldCheck,
   Star,
   Truck,
@@ -17,17 +17,22 @@ import {
 /* ---------- data ---------- */
 const words = ["hot.", "fresh.", "fast.", "local."];
 
-const orders = [
-  { item: "Pepperoni Feast", who: "Rafi · Agrabad", price: "৳349" },
-  { item: "BBQ Chicken", who: "Nusrat · GEC Circle", price: "৳429" },
-  { item: "Four Cheese", who: "Tanvir · Khulshi", price: "৳389" },
-];
-
 const steps = [
-  { label: "Confirmed", icon: Check },
-  { label: "Baking", icon: Flame },
-  { label: "On the way", icon: Bike },
-  { label: "Delivered", icon: PackageCheck },
+  {
+    icon: Pizza,
+    title: "Pick your pizza",
+    text: "Browse menus from verified local kitchens.",
+  },
+  {
+    icon: ChefHat,
+    title: "Kitchen bakes it",
+    text: "Your order is baked fresh, never reheated.",
+  },
+  {
+    icon: Bike,
+    title: "Hot at your door",
+    text: "Track your delivery until it arrives.",
+  },
 ];
 
 const perks = [
@@ -106,7 +111,7 @@ const CountUp = ({
 /* ---------- banner ---------- */
 const Banner = () => {
   const [wordIndex, setWordIndex] = useState(0);
-  const [tick, setTick] = useState(0);
+  const [active, setActive] = useState(0);
 
   // Rotating headline word
   useEffect(() => {
@@ -117,14 +122,14 @@ const Banner = () => {
     return () => clearInterval(id);
   }, []);
 
-  // Live order tracker: 5 ticks per order (4 steps + a short pause on "Delivered")
+  // Auto-advance "How it works" steps (clicking a step restarts the timer)
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 1500);
-    return () => clearInterval(id);
-  }, []);
-
-  const order = orders[Math.floor(tick / 5) % orders.length];
-  const step = Math.min(tick % 5, 3);
+    const id = setTimeout(
+      () => setActive((a) => (a + 1) % steps.length),
+      2800
+    );
+    return () => clearTimeout(id);
+  }, [active]);
 
   return (
     <div className="relative bg-[#FFF8F0] pb-10 sm:pb-14">
@@ -137,14 +142,15 @@ const Banner = () => {
           100% { transform: translateY(-34rem) translateX(24px); opacity: 0; }
         }
         @keyframes ph-word { from { opacity: 0; transform: translateY(70%); } to { opacity: 1; transform: none; } }
-        @keyframes ph-swap { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+        @keyframes ph-fill { from { width: 0; } to { width: 100%; } }
         .ph-rise { animation: ph-rise .8s cubic-bezier(.2,.7,.2,1) both; }
         .ph-kenburns { animation: ph-kenburns 26s ease-in-out infinite alternate; }
         .ph-ember { animation: ph-ember var(--dur) linear var(--delay) infinite; }
         .ph-word { animation: ph-word .55s cubic-bezier(.2,.7,.2,1) both; }
-        .ph-swap { animation: ph-swap .45s ease-out both; }
+        .ph-fill { animation: ph-fill 2800ms linear both; }
         @media (prefers-reduced-motion: reduce) {
-          .ph-rise, .ph-kenburns, .ph-ember, .ph-word, .ph-swap { animation: none; }
+          .ph-rise, .ph-kenburns, .ph-ember, .ph-word { animation: none; }
+          .ph-fill { animation: none; width: 100%; }
         }
       `}</style>
 
@@ -251,7 +257,7 @@ const Banner = () => {
               </dl>
             </div>
 
-            {/* ---------- Live order tracker ---------- */}
+            {/* ---------- How it works card ---------- */}
             <div className="ph-rise [animation-delay:200ms] lg:col-span-5 lg:flex lg:justify-end">
               <div className="mx-auto w-full max-w-sm rounded-3xl border border-white/20 bg-white/10 p-5 text-white shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-6 lg:mx-0">
                 <div className="flex items-center justify-between">
@@ -260,56 +266,65 @@ const Banner = () => {
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
                     </span>
-                    Live orders
+                    How it works
                   </span>
-                  <span className="text-xs text-neutral-300">Chattogram</span>
+                  <span className="text-xs text-neutral-300">Takes ~2 minutes</span>
                 </div>
 
-                {/* Current order (re-animates when it changes) */}
-                <div key={order.item} className="ph-swap mt-5 flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="truncate text-lg font-extrabold leading-tight sm:text-xl">
-                      {order.item}
-                    </p>
-                    <p className="mt-1 truncate text-sm text-neutral-300">{order.who}</p>
-                  </div>
-                  <p className="shrink-0 text-xl font-black text-amber-300">{order.price}</p>
-                </div>
-
-                {/* Progress */}
-                <div className="mt-6">
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/15">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-amber-300 to-red-500 transition-[width] duration-700 ease-out"
-                      style={{ width: `${(step / 3) * 100}%` }}
-                    />
-                  </div>
-
-                  <ol className="mt-4 grid grid-cols-4 gap-1 text-center">
-                    {steps.map(({ label, icon: Icon }, i) => {
-                      const done = i <= step;
-                      return (
-                        <li key={label} className="flex flex-col items-center gap-1.5">
+                <ol className="mt-5 space-y-3">
+                  {steps.map(({ icon: Icon, title, text }, i) => {
+                    const isActive = i === active;
+                    return (
+                      <li key={title}>
+                        <button
+                          type="button"
+                          onClick={() => setActive(i)}
+                          aria-current={isActive ? "step" : undefined}
+                          className={`flex w-full items-start gap-4 rounded-2xl border p-4 text-left transition-all duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+                            isActive
+                              ? "border-white/30 bg-white/15 shadow-lg"
+                              : "border-transparent bg-white/5 opacity-60 hover:opacity-100"
+                          }`}
+                        >
                           <span
-                            className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-500 ${
-                              done
-                                ? "scale-100 border-transparent bg-red-600 text-white shadow-lg shadow-red-600/40"
-                                : "scale-90 border-white/20 bg-white/5 text-neutral-400"
+                            className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${
+                              isActive
+                                ? "bg-red-600 text-white shadow-lg shadow-red-600/40"
+                                : "bg-white/10 text-neutral-300"
                             }`}
                           >
-                            <Icon className="h-4 w-4" />
+                            {isActive && (
+                              <span className="absolute inset-0 animate-ping rounded-xl bg-red-500/40" />
+                            )}
+                            <Icon className="relative h-5 w-5" />
                           </span>
-                          <span
-                            className={`text-[10px] font-medium leading-tight transition-colors duration-500 sm:text-xs ${
-                              done ? "text-white" : "text-neutral-400"
-                            }`}
-                          >
-                            {label}
+
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-base font-bold">{title}</span>
+                            <span
+                              className={`grid transition-all duration-500 ${
+                                isActive
+                                  ? "grid-rows-[1fr] opacity-100"
+                                  : "grid-rows-[0fr] opacity-0"
+                              }`}
+                            >
+                              <span className="overflow-hidden pt-1 text-sm leading-6 text-neutral-200">
+                                {text}
+                              </span>
+                            </span>
                           </span>
-                        </li>
-                      );
-                    })}
-                  </ol>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+
+                {/* Progress for the current step */}
+                <div className="mt-5 h-1 w-full overflow-hidden rounded-full bg-white/15">
+                  <div
+                    key={active}
+                    className="ph-fill h-full rounded-full bg-gradient-to-r from-amber-300 to-red-500"
+                  />
                 </div>
               </div>
             </div>
