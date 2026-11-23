@@ -1,7 +1,8 @@
+
 "use client";
 
 import Link from "next/link";
-import { Pizza } from "lucide-react";
+import { Pizza, Eye, EyeOff } from "lucide-react";
 import { authClient } from "../lib/auth-client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -14,6 +15,7 @@ export default function SignInPage() {
 
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleEmailSignIn = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -108,19 +110,26 @@ export default function SignInPage() {
   return (
     <main className="flex min-h-[75vh] items-center justify-center px-4 py-12">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg sm:p-8">
+
+        {/* Header */}
         <div className="mb-7 text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-100">
             <Pizza size={30} className="text-red-600" />
           </div>
 
-          <h1 className="text-3xl font-bold text-[#29211D]">Welcome Back!</h1>
+          <h1 className="text-3xl font-bold text-[#29211D]">
+            Welcome Back!
+          </h1>
 
           <p className="mt-2 text-sm text-gray-500">
             Sign in to continue enjoying PizzaHub.
           </p>
         </div>
 
+        {/* Sign In Form */}
         <form className="space-y-5" onSubmit={handleEmailSignIn}>
+
+          {/* Account Type */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Account Type
@@ -138,6 +147,7 @@ export default function SignInPage() {
             </select>
           </div>
 
+          {/* Email */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Email Address
@@ -152,19 +162,38 @@ export default function SignInPage() {
             />
           </div>
 
+          {/* Password */}
           <div>
-            <label className="mb-2 block text-sm font-semibold">Password</label>
+            <label className="mb-2 block text-sm font-semibold">
+              Password
+            </label>
 
-            <input
-              type="password"
-              name="password"
-              placeholder="Enter your password"
-              required
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-red-500"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Enter your password"
+                required
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 outline-none focus:border-red-500"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-red-600"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff size={20} />
+                ) : (
+                  <Eye size={20} />
+                )}
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center justify-between text-sm">
+          {/* Remember Me */}
+          <div className="flex items-center text-sm">
             <label className="flex items-center gap-2 text-gray-600">
               <input
                 type="checkbox"
@@ -173,15 +202,9 @@ export default function SignInPage() {
               />
               Remember me
             </label>
-
-            <Link
-              href="/forgot-password"
-              className="font-medium text-red-600 hover:underline"
-            >
-              Forgot Password?
-            </Link>
           </div>
 
+          {/* Sign In Button */}
           <button
             type="submit"
             disabled={loading || googleLoading}
@@ -191,12 +214,14 @@ export default function SignInPage() {
           </button>
         </form>
 
+        {/* Divider */}
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-gray-200" />
           <span className="text-sm text-gray-400">OR</span>
           <div className="h-px flex-1 bg-gray-200" />
         </div>
 
+        {/* Google Sign In */}
         <button
           type="button"
           onClick={handleGoogleSignIn}
@@ -207,6 +232,7 @@ export default function SignInPage() {
           {googleLoading ? "Connecting..." : "Continue with Google"}
         </button>
 
+        {/* Sign Up Link */}
         <p className="mt-6 text-center text-sm text-gray-600">
           Don&apos;t have an account?{" "}
           <Link
@@ -216,6 +242,7 @@ export default function SignInPage() {
             Sign Up
           </Link>
         </p>
+
       </div>
     </main>
   );
