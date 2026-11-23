@@ -1,7 +1,8 @@
+
 "use client";
 
 import Link from "next/link";
-import { Pizza } from "lucide-react";
+import { Pizza, Eye, EyeOff } from "lucide-react";
 import { authClient } from "../lib/auth-client";
 import { toast } from "sonner";
 import type { FormEvent } from "react";
@@ -15,6 +16,7 @@ export default function SignUpPage() {
 
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleEmailSignUp = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -105,6 +107,7 @@ export default function SignUpPage() {
         </div>
 
         <form className="space-y-4" onSubmit={handleEmailSignUp}>
+          {/* Full Name */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Full Name
@@ -119,6 +122,7 @@ export default function SignUpPage() {
             />
           </div>
 
+          {/* Email */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Email Address
@@ -133,23 +137,42 @@ export default function SignUpPage() {
             />
           </div>
 
+          {/* Password */}
           <div>
-            <label className="mb-2 block text-sm font-semibold">Password</label>
+            <label className="mb-2 block text-sm font-semibold">
+              Password
+            </label>
 
-            <input
-              type="password"
-              name="password"
-              placeholder="At least 8 characters"
-              minLength={8}
-              required
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-red-500"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="At least 8 characters"
+                minLength={8}
+                required
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-12 outline-none focus:border-red-500"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-red-600"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff size={20} />
+                ) : (
+                  <Eye size={20} />
+                )}
+              </button>
+            </div>
 
             <p className="mt-1 text-xs text-gray-400">
               Use at least 8 characters.
             </p>
           </div>
 
+          {/* Profile Image */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Profile Image URL (Optional)
@@ -163,6 +186,7 @@ export default function SignUpPage() {
             />
           </div>
 
+          {/* Account Role */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Select Account Role
@@ -179,6 +203,7 @@ export default function SignUpPage() {
             </select>
           </div>
 
+          {/* Sign Up Button */}
           <button
             type="submit"
             disabled={loading || googleLoading}
@@ -188,12 +213,14 @@ export default function SignUpPage() {
           </button>
         </form>
 
+        {/* Divider */}
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-gray-200" />
           <span className="text-sm text-gray-400">OR</span>
           <div className="h-px flex-1 bg-gray-200" />
         </div>
 
+        {/* Google Sign Up */}
         <button
           type="button"
           onClick={handleGoogleSignUp}
@@ -204,6 +231,7 @@ export default function SignUpPage() {
           {googleLoading ? "Connecting..." : "Sign Up with Google"}
         </button>
 
+        {/* Sign In Link */}
         <p className="mt-6 text-center text-sm text-gray-600">
           Already have an account?{" "}
           <Link
