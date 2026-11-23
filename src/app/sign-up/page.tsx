@@ -27,23 +27,32 @@ export default function SignUpPage() {
     const email = (formData.get("email") as string).trim();
     const password = formData.get("password") as string;
     const image = (formData.get("image") as string).trim();
-    const role = formData.get("role") as UserRole;
+
+    const selectedRole = formData.get("role");
+
+    if (selectedRole !== "customer" && selectedRole !== "vendor") {
+      toast.error("Please select a valid account role.");
+      return;
+    }
+
+    const role: UserRole = selectedRole;
+
+    if (password.length < 8) {
+      toast.error("Password must be at least 8 characters.");
+      return;
+    }
 
     try {
       setLoading(true);
 
-      const signUpData = {
+      const { data, error } = await authClient.signUp.email({
         name,
         email,
         password,
         image: image || undefined,
         role,
         callbackURL: "/",
-      };
-
-      const { data, error } = await authClient.signUp.email(
-        signUpData as Parameters<typeof authClient.signUp.email>[0],
-      );
+      });
 
       if (error) {
         toast.error(error.message || "Signup failed.");
@@ -53,16 +62,16 @@ export default function SignUpPage() {
       if (data) {
         toast.success("Account created successfully!");
 
-        if (role === "vendor") {
-          router.replace("/dashboard/vendor");
-        } else {
-          router.replace("/dashboard/customer");
-        }
+        router.replace(
+          role === "vendor"
+            ? "/dashboard/vendor"
+            : "/dashboard/customer",
+        );
 
         router.refresh();
       }
     } catch (error) {
-      console.error(error);
+      console.error("Signup error:", error);
       toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
@@ -83,7 +92,7 @@ export default function SignUpPage() {
         setGoogleLoading(false);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Google signup error:", error);
       toast.error("Google signup failed. Please try again.");
       setGoogleLoading(false);
     }
@@ -107,7 +116,6 @@ export default function SignUpPage() {
         </div>
 
         <form className="space-y-4" onSubmit={handleEmailSignUp}>
-          {/* Full Name */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Full Name
@@ -122,7 +130,6 @@ export default function SignUpPage() {
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Email Address
@@ -137,7 +144,6 @@ export default function SignUpPage() {
             />
           </div>
 
-          {/* Password */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Password
@@ -159,11 +165,7 @@ export default function SignUpPage() {
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 transition hover:text-red-600"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? (
-                  <EyeOff size={20} />
-                ) : (
-                  <Eye size={20} />
-                )}
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
 
@@ -172,7 +174,6 @@ export default function SignUpPage() {
             </p>
           </div>
 
-          {/* Profile Image */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Profile Image URL (Optional)
@@ -186,7 +187,6 @@ export default function SignUpPage() {
             />
           </div>
 
-          {/* Account Role */}
           <div>
             <label className="mb-2 block text-sm font-semibold">
               Select Account Role
@@ -203,7 +203,6 @@ export default function SignUpPage() {
             </select>
           </div>
 
-          {/* Sign Up Button */}
           <button
             type="submit"
             disabled={loading || googleLoading}
@@ -213,14 +212,12 @@ export default function SignUpPage() {
           </button>
         </form>
 
-        {/* Divider */}
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-gray-200" />
           <span className="text-sm text-gray-400">OR</span>
           <div className="h-px flex-1 bg-gray-200" />
         </div>
 
-        {/* Google Sign Up */}
         <button
           type="button"
           onClick={handleGoogleSignUp}
@@ -231,7 +228,6 @@ export default function SignUpPage() {
           {googleLoading ? "Connecting..." : "Sign Up with Google"}
         </button>
 
-        {/* Sign In Link */}
         <p className="mt-6 text-center text-sm text-gray-600">
           Already have an account?{" "}
           <Link

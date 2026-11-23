@@ -26,18 +26,17 @@ export const auth = betterAuth({
     },
   },
 
-  // Customer and Vendor role
   user: {
     additionalFields: {
       role: {
-        type: "string",
+        type: ["customer", "vendor", "admin"],
         required: false,
         defaultValue: "customer",
         input: true,
       },
     },
   },
-  // JWT Plugin
+
   plugins: [
     jwt({
       jwt: {
